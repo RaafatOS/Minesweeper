@@ -30,7 +30,7 @@ public class GUI extends JPanel implements ActionListener{
     Main main;
     Matrix m;
     final static int PORT = 2000;
-    static String txt = "";
+    static String text ="";
     int nbOuvert =0;
     int nbMine;
     Case[][] cases;
@@ -99,13 +99,20 @@ public class GUI extends JPanel implements ActionListener{
         private final static int DIM=50 ; 
         private int x, y;
         static int previousVal = 0;
+        
+        private String txt = "";
         public int state = 0; // 0: hidden, 1: flagged, 2: revealed
         public Case (int x, int y) { 
             this.x = x;
             this.y = y;
             setPreferredSize(new Dimension(DIM, DIM)); // taille de la case 
             addMouseListener(this); // ajout listener souris 
-            
+        }
+        public String getTxt() {
+            return txt;
+        }
+        public void setTxt(String txt) {
+            this.txt = txt;
         }
 
         public void openCase(int x, int y){
@@ -114,21 +121,28 @@ public class GUI extends JPanel implements ActionListener{
             int numCase;
             numCase = m.computeMinesAround(x , y);
             previousVal = numCase;
-            txt = Integer.toString(numCase);
+            cases[x][y].setTxt(Integer.toString(numCase));
             nbOuvert++;
             cases[x][y].repaint();
         }
         
     public void propagate(int x, int y){
-        if(x < 0 || x >= m.getDIM() || y < 0 || y >= m.getDIM() || m.getCase(x, y) || (m.computeMinesAround(x, y)!=0 && previousVal !=0) || cases[x][y].state == 2){
+        if(x < 0 || x >= m.getDIM() || y < 0 || y >= m.getDIM() || m.getCase(x, y) || cases[x][y].state == 2){
             return;
         }
         // how to open the cases around the one clicked
         openCase(x, y);
+        if(m.computeMinesAround(x, y)>0){
+            return;
+        }
         propagate(x-1, y);
         propagate(x+1, y);
         propagate(x, y-1);
         propagate(x, y+1);
+        propagate(x-1, y-1);
+        propagate(x+1, y+1);
+        propagate(x-1, y+1);
+        propagate(x+1, y-1);
     }
         @Override
         public void mouseClicked(MouseEvent e) {
@@ -162,10 +176,10 @@ public class GUI extends JPanel implements ActionListener{
         @Override
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
-            int x = DIM/2 - getFontMetrics(getFont()).stringWidth(txt)/2;
+            int x = DIM/2 - getFontMetrics(getFont()).stringWidth(getTxt())/2;
             int y = DIM/2 ;
             g.setColor(Color.BLACK);
-            g.drawString(txt, x, y);
+            g.drawString(getTxt(), x, y);
             //g.fillRect(5, 5, DIM, DIM);
             //repaint();
         }
@@ -194,7 +208,7 @@ public class GUI extends JPanel implements ActionListener{
     }
 
     private void changeForm(int dim, int nb){
-        txt = "";
+        text = "";
         Matrix nwMatrix = new Matrix(nb, dim);
         GUI.this.m = nwMatrix;
         GUI.this.m.placeNumbersDisplay();
@@ -265,7 +279,7 @@ public class GUI extends JPanel implements ActionListener{
 
         }
         if(e.getSource() == newGame){
-            txt = "";
+            text = "";
             GUI.this.m.changeMatrix();
             GUI.this.startPanel.removeAll();
             
