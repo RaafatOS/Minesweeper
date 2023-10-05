@@ -1,0 +1,137 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Random;
+
+public class MinesweeperGame extends JFrame {
+    private final int numRows = 10;
+    private final int numCols = 10;
+    private final int numMines = 15;
+    private final JButton[][] buttons = new JButton[numRows][numCols];
+    private final boolean[][] mines = new boolean[numRows][numCols];
+
+    public MinesweeperGame() {
+        setTitle("Minesweeper");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new GridLayout(numRows, numCols));
+
+        initializeMines();
+        createButtons();
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    private void initializeMines() {
+        Random random = new Random();
+
+        // Place mines randomly
+        for (int i = 0; i < numMines; i++) {
+            int row, col;
+            do {
+                row = random.nextInt(numRows);
+                col = random.nextInt(numCols);
+            } while (mines[row][col]);
+            mines[row][col] = true;
+        }
+    }
+
+    private void createButtons() {
+        for (int row = 0; row < numRows; row++) {
+            for (int col = 0; col < numCols; col++) {
+                buttons[row][col] = new JButton();
+                buttons[row][col].setMargin(new Insets(0, 0, 0, 0));
+                buttons[row][col].setFont(new Font("Arial", Font.PLAIN, 20));
+                buttons[row][col].setBackground(Color.LIGHT_GRAY);
+
+                final int currentRow = row;
+                final int currentCol = col;
+
+                buttons[row][col].addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        handleButtonClick(currentRow, currentCol);
+                    }
+                });
+
+                add(buttons[row][col]);
+            }
+        }
+    }
+
+    private void handleButtonClick(int row, int col) {
+        if (mines[row][col]) {
+            // Handle a mine click (e.g., game over)
+            buttons[row][col].setText("X");
+            JOptionPane.showMessageDialog(this, "Game Over!");
+            resetGame();
+        } else {
+            // Handle a non-mine click (e.g., reveal nearby mines)
+            int nearbyMines = countNearbyMines(row, col);
+            if (nearbyMines > 0) {
+                buttons[row][col].setText(Integer.toString(nearbyMines));
+            } else {
+                // Recursive reveal of adjacent cells without mines
+                buttons[row][col].setText("");
+                revealAdjacentEmptyCells(row, col);
+            }
+            buttons[row][col].setEnabled(false);
+        }
+    }
+
+    private int countNearbyMines(int row, int col) {
+        int count = 0;
+        for (int dr = -1; dr <= 1; dr++) {
+            for (int dc = -1; dc <= 1; dc++) {
+                int r = row + dr;
+                int c = col + dc;
+                if (r >= 0 && r < numRows && c >= 0 && c < numCols && mines[r][c]) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private void revealAdjacentEmptyCells(int row, int col) {
+        for (int dr = -1; dr <= 1; dr++) {
+            for (int dc = -1; dc <= 1; dc++) {
+                int r = row + dr;
+                int c = col + dc;
+                if (r >= 0 && r < numRows && c >= 0 && c < numCols && buttons[r][c].isEnabled()) {
+                    int nearbyMines = countNearbyMines(r, c);
+                    if (nearbyMines == 0) {
+                        buttons[r][c].setText("");
+                        buttons[r][c].setEnabled(false);
+                        revealAdjacentEmptyCells(r, c);
+                    } else {
+                        buttons[r][c].setText(Integer.toString(nearbyMines));
+                        buttons[r][c].setEnabled(false);
+                    }
+                }
+            }
+        }
+    }
+
+    private void resetGame() {
+        for (int row = 0; row < numRows; row++) {
+            for (int col = 0; col < numCols; col++) {
+                buttons[row][col].setText("");
+                buttons[row][col].setEnabled(true);
+                mines[row][col] = false;
+            }
+        }
+        initializeMines();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new MinesweeperGame();
+            }
+        });
+    }
+}
