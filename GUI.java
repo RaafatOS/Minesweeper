@@ -31,7 +31,7 @@ public class GUI extends JPanel implements ActionListener{
     Matrix m;
     final static int PORT = 2000;
     static String text ="";
-    int nbOuvert =0;
+    int nbOuvert = 1;
     int nbMine;
     Case[][] cases;
     
@@ -153,16 +153,16 @@ public class GUI extends JPanel implements ActionListener{
                     JOptionPane.showMessageDialog(this, "You lost!");
 
                 }else{
-                    e.getComponent().setBackground(Color.white);
+                    //e.getComponent().setBackground(Color.white);
                     int numCase;
                     numCase = m.computeMinesAround(x , y);
-                    txt = Integer.toString(numCase);
-                    nbOuvert++;
                     if(nbOuvert == m.getDIM()*m.getDIM() - nbMine){
                         JOptionPane.showMessageDialog(this, "You won!");
                     }
                     if(numCase == 0){
                         propagate(x, y);
+                    }else{
+                        openCase(x, y);
                     }
                 }
                 repaint();
