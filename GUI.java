@@ -31,11 +31,15 @@ public class GUI extends JPanel implements ActionListener{
     Matrix m;
     final static int PORT = 2000;
     static String text ="";
-    int nbOuvert = 1;
+    public int nbOuvert = 1;
     int nbMine;
     Case[][] cases;
     
 
+    public void resetCounter(){
+        nbOuvert = 1;
+        nbMine = m.computeMinesNumber();
+    }
     //how to fill the grid with blanck cases
     
     public void FillWindow(GUI gui) {
@@ -148,27 +152,37 @@ public class GUI extends JPanel implements ActionListener{
         public void mouseClicked(MouseEvent e) {
             if(e.getButton()== MouseEvent.BUTTON1){
                 if(m.getCase(x, y)){
-                    e.getComponent().setBackground(Color.RED);
-                    txt = "X";
-                    JOptionPane.showMessageDialog(this, "You lost!");
-
+                    if(cases[x][y].state == 0){
+                        cases[x][y].setBackground(Color.RED);
+                        cases[x][y].setTxt("X");
+                        JOptionPane.showMessageDialog(this, "You lost!");
+                        
+                        changeForm(m.getDIM(), m.minesNumber);
+                    }
                 }else{
-                    //e.getComponent().setBackground(Color.white);
                     int numCase;
                     numCase = m.computeMinesAround(x , y);
                     if(nbOuvert == m.getDIM()*m.getDIM() - nbMine){
                         JOptionPane.showMessageDialog(this, "You won!");
                     }
-                    if(numCase == 0){
-                        propagate(x, y);
-                    }else{
-                        openCase(x, y);
+                    if(cases[x][y].state == 0){
+                        if(numCase == 0){
+                            propagate(x, y);
+                        }else{
+                            openCase(x, y);
+                        }
                     }
                 }
                 repaint();
             }else{
                 txt = "";
-                e.getComponent().setBackground(Color.YELLOW);
+                if(cases[x][y].state == 0){
+                    cases[x][y].state = 1;
+                    cases[x][y].setBackground(Color.YELLOW);
+                }else{
+                    cases[x][y].state = 0;
+                    cases[x][y].setBackground(Color.LIGHT_GRAY);
+                }
             }
             
         }
@@ -214,7 +228,6 @@ public class GUI extends JPanel implements ActionListener{
         GUI.this.m.placeNumbersDisplay();
         GUI.this.startPanel.removeAll();
         GUI.this.startPanel.setLayout(new GridLayout(GUI.this.m.getDIM(), GUI.this.m.getDIM()));
-            
         initializeLabels(GUI.this);
             //FillWindow(GUI.this);
         main.pack();
@@ -232,6 +245,8 @@ public class GUI extends JPanel implements ActionListener{
             }
         }
         add(startPanel, BorderLayout.CENTER);
+        
+        GUI.this.resetCounter();
     }
 
     GUI(Matrix mat, Main main){
