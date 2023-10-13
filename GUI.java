@@ -6,6 +6,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 import java.net.*;
+import java.util.HashMap;
 import java.util.Scanner;
 import java.io.*;
 
@@ -34,11 +35,13 @@ public class GUI extends JPanel implements ActionListener {
     final static int PORT = 2000;
     private final static String FILE_PATH = "C:\\Users\\raafat\\Desktop\\ISMIN CS\\java avance\\src\\diff.txt";
     static String text = "";
-    public int nbOuvert = 1;
+    private int nbOuvert = 0;
     int nbMine;
     Case[][] cases;
+    String content;
     private Timer timer;
     private int seconds;
+    private HashMap<String, Integer> scores = new HashMap<String, Integer>();
 
     // file reader and writer
     public static String readFile(String path) {
@@ -67,6 +70,19 @@ public class GUI extends JPanel implements ActionListener {
         }
     }
 
+    // getters and setters for nbOuvert
+    public int getNbOuvert() {
+        return nbOuvert;
+    }
+
+    public void resetNbOuvert() {
+        nbOuvert = 0;
+    }
+
+    public void incrementNbOuvert() {
+        nbOuvert++;
+    }
+
     // timer
 
     private void startTimer() {
@@ -80,7 +96,7 @@ public class GUI extends JPanel implements ActionListener {
     }
 
     private void updateTimerDisplay() {
-        timerLabel.setText( "Time: " + (seconds / 60) + ":" + (seconds % 60));
+        timerLabel.setText("Time: " + (seconds / 60) + ":" + (seconds % 60));
     }
 
     private void stopTimer() {
@@ -95,6 +111,17 @@ public class GUI extends JPanel implements ActionListener {
     public void resetCounter() {
         nbOuvert = 1;
         nbMine = m.computeMinesNumber();
+    }
+
+    // score handling
+    public void addScore(String name, int score) {
+        scores.put(name, score);
+    }
+
+    public void displayScores() {
+        for (String name : scores.keySet()) {
+            System.out.println(name + " : " + scores.get(name));
+        }
     }
 
     // server handler
@@ -171,7 +198,7 @@ public class GUI extends JPanel implements ActionListener {
             numCase = m.computeMinesAround(x, y);
             previousVal = numCase;
             cases[x][y].setTxt(Integer.toString(numCase));
-            nbOuvert++;
+            incrementNbOuvert();
             cases[x][y].repaint();
         }
 
@@ -194,32 +221,43 @@ public class GUI extends JPanel implements ActionListener {
             propagate(x + 1, y - 1);
         }
 
+        public void checkWin() {
+            if (getNbOuvert() == m.getDIM() * m.getDIM() - nbMine) {
+                addScore(content, 100);
+                displayScores();
+                JOptionPane.showMessageDialog(this, "You won!");
+                stopTimer();
+                resetTimer();
+                changeForm(m.getDIM(), m.minesNumber);
+            }
+        }
+
         @Override
         public void mouseClicked(MouseEvent e) {
             if (e.getButton() == MouseEvent.BUTTON1) {
+                int numCase;
+                numCase = m.computeMinesAround(x, y);
+
                 if (m.getCase(x, y)) {
                     if (cases[x][y].state == 0) {
+                        int score = (100 * (nbOuvert)) / (m.getDIM() * m.getDIM() - nbMine);
+                        addScore(content, score);
+                        displayScores();
                         cases[x][y].setBackground(Color.RED);
                         cases[x][y].setTxt("X");
-                        JOptionPane.showMessageDialog(this, "You lost!");
+                        JOptionPane.showMessageDialog(this, "You lost! Your score is: " + score);
                         stopTimer();
                         resetTimer();
                         changeForm(m.getDIM(), m.minesNumber);
                     }
                 } else {
-                    int numCase;
-                    numCase = m.computeMinesAround(x, y);
-                    if (nbOuvert == m.getDIM() * m.getDIM() - nbMine) {
-                        JOptionPane.showMessageDialog(this, "You won!");
-                        stopTimer();
-                        resetTimer();
-                        changeForm(m.getDIM(), m.minesNumber);
-                    }
                     if (cases[x][y].state == 0) {
                         if (numCase == 0) {
                             propagate(x, y);
+                            checkWin();
                         } else {
                             openCase(x, y);
+                            checkWin();
                         }
                     }
                 }
@@ -307,8 +345,9 @@ public class GUI extends JPanel implements ActionListener {
             }
         }
         add(startPanel, BorderLayout.CENTER);
-        
+
         GUI.this.resetCounter();
+        GUI.this.resetNbOuvert();
         startTimer();
     }
     // GUI creation
@@ -317,11 +356,11 @@ public class GUI extends JPanel implements ActionListener {
         this.main = main;
         // reading latest diff and applying it to the game
         Matrix init;
-        String content = readFile(FILE_PATH);
+        content = readFile(FILE_PATH);
         System.out.println(content);
-        switch(content) {
+        switch (content) {
             case "easy":
-                init = new Matrix(1, 4);
+                init = new Matrix(2, 4);
                 break;
             case "medium":
                 init = new Matrix(7, 7);
@@ -387,14 +426,17 @@ public class GUI extends JPanel implements ActionListener {
         if (e.getSource() == hard) {
             changeForm(9, 18);
             writeFile(FILE_PATH, "hard");
+            content = "hard";
         }
         if (e.getSource() == easy) {
-            changeForm(4, 1);
+            changeForm(4, 2);
             writeFile(FILE_PATH, "easy");
+            content = "easy";
         }
         if (e.getSource() == medium) {
             changeForm(7, 7);
             writeFile(FILE_PATH, "medium");
+            content = "medium";
         }
 
         if (e.getSource() == server) {
