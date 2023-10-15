@@ -2,11 +2,11 @@
 import java.net.*;
 import java.io.*;
 
-
 public class client {
     final static int PORT = 2000;
-    public static void main(String[] args){
-        try{
+
+    client() {
+        try {
             System.out.println("client started ...");
             Socket server = new Socket("localhost", PORT);
             DataInputStream in = new DataInputStream(server.getInputStream());
@@ -17,17 +17,19 @@ public class client {
 
             Thread sThread = new Thread(new ServerHandler(server));
             sThread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        catch(Exception e){e.printStackTrace();}
     }
 
     private static class ServerHandler implements Runnable {
 
         private final Socket server;
 
-        public ServerHandler(Socket server){
+        public ServerHandler(Socket server) {
             this.server = server;
         }
+
         @Override
         public void run() {
             try {
@@ -38,9 +40,11 @@ public class client {
                 Thread.sleep(100);
                 out.writeInt(5);
                 System.out.println("client sending ... ");
-                while(true){
+                while (true) {
+                    if (in.available() == 0)
+                        continue;
                     msg = in.readInt();
-                    switch(msg){
+                    switch (msg) {
                         case 100:
                             msg = in.readInt();
                             System.out.println("server in thread 2 says: the dim = " + msg);
@@ -58,7 +62,10 @@ public class client {
                 e.printStackTrace();
             }
         }
-        
-        }
+
     }
 
+    public static void main(String[] args) {
+        new client();
+    }
+}

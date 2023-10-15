@@ -21,16 +21,17 @@ public class GUI extends JPanel implements ActionListener {
     JPanel startPanel;
     JMenuBar menu = new JMenuBar();
     JMenu headMenu = new JMenu("Menu");
-    JMenuItem server = new JMenuItem("Server");
+    JMenuItem server = new JMenuItem("create to Server");
     JMenu diff = new JMenu("Difficulty");
     JButton newGame = new JButton("New Game");
+    JButton addPlayer = new JButton("Add Player");
     JButton exit = new JButton("Exit");
     JMenuItem easy = new JMenuItem("Easy");
     JMenuItem medium = new JMenuItem("Medium");
     JMenuItem hard = new JMenuItem("Hard");
     JLabel timerLabel = new JLabel();
     boolean visible = false;
-    Main main;
+    JFrame main;
     Matrix m;
     final static int PORT = 2000;
     private final static String FILE_PATH = "C:\\Users\\raafat\\Desktop\\ISMIN CS\\java avance\\src\\diff.txt";
@@ -42,6 +43,7 @@ public class GUI extends JPanel implements ActionListener {
     private Timer timer;
     private int seconds;
     private HashMap<String, Integer> scores = new HashMap<String, Integer>();
+    playerGui player;
 
     // file reader and writer
     public static String readFile(String path) {
@@ -96,7 +98,8 @@ public class GUI extends JPanel implements ActionListener {
     }
 
     private void updateTimerDisplay() {
-        timerLabel.setText("Time: " + (seconds / 60) + ":" + (seconds % 60));
+        timerLabel.setText(
+                "Time: " + String.format("%02d", (seconds / 60)) + ":" + String.format("%02d", (seconds % 60)));
     }
 
     private void stopTimer() {
@@ -123,52 +126,60 @@ public class GUI extends JPanel implements ActionListener {
             System.out.println(name + " : " + scores.get(name));
         }
     }
+    
+    // playerGui class
+    // public class playerGui extends JFrame implements ActionListener {
 
-    // server handler
-    private static class ServerHandler implements Runnable {
+    //     String name = "";
+    //     Matrix mat;
+    //     JButton button = new JButton("Click me");
+    //     JPanel playPanel;
+    //     Case[][] casesP;
 
-        private final Socket server;
+    //     @Override
+    //     public void actionPerformed(ActionEvent e) {
+    //         if (e.getSource() == button) {
+    //             System.out.println(name);
+    //         }
+    //     }
 
-        public ServerHandler(Socket server) {
-            this.server = server;
-        }
+    //     public void initializePlayer() {
+    //         casesP = new Case[mat.getDIM()][mat.getDIM()];
+    //         playPanel = new JPanel(new GridLayout(mat.getDIM(), mat.getDIM()));
+    //         for (int i = 0; i < mat.getDIM(); i++) {
+    //             for (int j = 0; j < mat.getDIM(); j++) {
+    //                 casesP[i][j] = new Case(i, j);
+    //                 casesP[i][j].setOpaque(true);
+    //                 casesP[i][j].setBorder(BorderFactory.createLineBorder(Color.BLACK));
+    //                 casesP[i][j].setBackground(Color.LIGHT_GRAY);
+    //                 playPanel.add(casesP[i][j]);
+    //             }
+    //         }
+    //         //add(playPanel, BorderLayout.CENTER);
+    //     }
 
-        @Override
-        public void run() {
-            try {
-                DataInputStream in = new DataInputStream(server.getInputStream());
-                DataOutputStream out = new DataOutputStream(server.getOutputStream());
-                int msg = in.readInt();
-                System.out.println("server in thread 1 says: " + msg);
-                Thread.sleep(100);
-                out.writeInt(5);
-                System.out.println("client sending ... ");
-                while (true) {
-                    msg = in.readInt();
-                    switch (msg) {
-                        case 100:
-                            msg = in.readInt();
-                            System.out.println("server in thread 2 says: the dim = " + msg);
-                            break;
-                        case 200:
-                            msg = in.readInt();
-                            System.out.println("server in thread 2 says: the nb mines = " + msg);
-                            break;
-                        default:
-                            System.out.println("server in thread 2 says: " + msg);
-                            break;
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+    //     public playerGui(String title, Matrix mat) {
+    //         super(title);
+    //         name = title;
+    //         this.mat = mat;
+    //         JPanel body = new JPanel(new GridLayout(1, 2));
 
-    }
+    //         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    //         setVisible(true);
+
+    //         button.addActionListener(this);
+    //         body.add(button);
+    //         initializePlayer();
+    //         body.add(playPanel, BorderLayout.CENTER);
+    //         add(body);
+    //         pack();
+    //     }
+
+    // }
 
     // case class with functions
 
-    class Case extends JPanel implements MouseListener {
+    public class Case extends JPanel implements MouseListener {
         private final static int DIM = 50;
         private int x, y;
         static int previousVal = 0;
@@ -207,7 +218,7 @@ public class GUI extends JPanel implements ActionListener {
                 return;
             }
             // how to open the cases around the one clicked
-            openCase(x, y);
+            openCase(x,y);
             if (m.computeMinesAround(x, y) > 0) {
                 return;
             }
@@ -229,6 +240,8 @@ public class GUI extends JPanel implements ActionListener {
                 stopTimer();
                 resetTimer();
                 changeForm(m.getDIM(), m.minesNumber);
+                // player.playPanel.removeAll();
+                // player.initializePlayer();
             }
         }
 
@@ -256,7 +269,7 @@ public class GUI extends JPanel implements ActionListener {
                             propagate(x, y);
                             checkWin();
                         } else {
-                            openCase(x, y);
+                            openCase(x,y);
                             checkWin();
                         }
                     }
@@ -288,30 +301,22 @@ public class GUI extends JPanel implements ActionListener {
 
         @Override
         public void mousePressed(MouseEvent e) {
-            // TODO Auto-generated method stub
-            // throw new UnsupportedOperationException("Unimplemented method
-            // 'mousePressed'");
+            
         }
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            // TODO Auto-generated method stub
-            // throw new UnsupportedOperationException("Unimplemented method
-            // 'mouseReleased'");
+            
         }
 
         @Override
         public void mouseEntered(MouseEvent e) {
-            // TODO Auto-generated method stub
-            // throw new UnsupportedOperationException("Unimplemented method
-            // 'mouseEntered'");
+            
         }
 
         @Override
         public void mouseExited(MouseEvent e) {
-            // TODO Auto-generated method stub
-            // throw new UnsupportedOperationException("Unimplemented method
-            // 'mouseExited'");
+            
         }
 
     }
@@ -352,7 +357,16 @@ public class GUI extends JPanel implements ActionListener {
     }
     // GUI creation
 
-    GUI(Matrix mat, Main main) {
+    GUI() {
+        this(new Matrix(7, 7), new Main());
+    }
+
+    GUI(String s,Matrix mat) {
+        this(mat, new Main());
+        System.out.println(s);
+    }
+
+    GUI(Matrix mat, JFrame main) {
         this.main = main;
         // reading latest diff and applying it to the game
         Matrix init;
@@ -380,6 +394,7 @@ public class GUI extends JPanel implements ActionListener {
         this.setLayout(new BorderLayout());
 
         head.add(newGame);
+        head.add(addPlayer);
         head.add(exit);
 
         diff.add(easy);
@@ -396,6 +411,7 @@ public class GUI extends JPanel implements ActionListener {
         exit.addActionListener(this);
         exit.setToolTipText("the end");
         newGame.addActionListener(this);
+        addPlayer.addActionListener(this);
         easy.addActionListener(this);
         medium.addActionListener(this);
         hard.addActionListener(this);
@@ -440,20 +456,23 @@ public class GUI extends JPanel implements ActionListener {
         }
 
         if (e.getSource() == server) {
-            try {
-                System.out.println("client started ...");
-                Socket server = new Socket("localhost", PORT);
-                DataInputStream in = new DataInputStream(server.getInputStream());
-                DataOutputStream out = new DataOutputStream(server.getOutputStream());
-                System.out.println("client sendind ...");
-                out.writeInt(200);
-                System.out.println("client reading ...");
+            // new Server().start();
+            ((Main) main).createServer();
+            //new client();
+        }
 
-                Thread sThread = new Thread(new ServerHandler(server));
-                sThread.start();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+        if (e.getSource() == addPlayer) {
+            String name = JOptionPane.showInputDialog(this, "Enter your name");
+            if (name != null) {
+                // create a new player in a new window
+                JFrame newPlayer = new JFrame(name);
+                player = new playerGui(name, m);
+                player.setVisible(true);
+                newPlayer.setContentPane(player);
+                newPlayer.setTitle(name);
+                newPlayer.pack();
+
+            } 
         }
     }
 }

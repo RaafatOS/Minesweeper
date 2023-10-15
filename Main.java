@@ -5,6 +5,10 @@ import javax.swing.*;
 
 public class Main extends JFrame {
 
+    public void createServer() {
+        SwingUtilities.invokeLater(()-> new serverGui());
+    }
+
     public Main() {
          Matrix m = new Matrix(7,7);
 
@@ -19,6 +23,7 @@ public class Main extends JFrame {
         pack();
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setVisible(true);
+        //setTitle("Minesweeper");
         //m.changeMatrix();
     }
     public static void main(String[] args) {
