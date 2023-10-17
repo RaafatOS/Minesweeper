@@ -16,20 +16,36 @@ public class serverGui extends JFrame{
         diff.add(easy);
         diff.add(medium);
         diff.add(hard);
-        menu.add(diff);
-        this.setJMenuBar(menu);
+        Server serv = new Server();
 
         start.addActionListener(e -> {
-            new Thread(() -> new Server().start()).start();
+            new Thread(() -> serv.start(1)).start();
         });
 
         stop.addActionListener(e -> {
             new client();
         });
 
-        
+        easy.addActionListener(e -> {
+            // make easy all players
+            new Thread(() ->
+             serv.start(2)).start();
+        });
+
+        medium.addActionListener(e -> {
+            // make medium all players
+            new Thread(() -> serv.start(3)).start();
+        });
+
+        hard.addActionListener(e -> {
+            // make hard all players
+            new Thread(() -> serv.start(4)).start();
+        });
         panel.add(start);
         panel.add(stop);
+        
+        menu.add(diff);
+        this.setJMenuBar(menu);
         this.add(panel);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(500, 200);

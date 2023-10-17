@@ -24,7 +24,7 @@ public class GUI extends JPanel implements ActionListener {
     JMenuItem server = new JMenuItem("create to Server");
     JMenu diff = new JMenu("Difficulty");
     JButton newGame = new JButton("New Game");
-    JButton addPlayer = new JButton("Add Player");
+    JMenuItem addPlayer = new JMenuItem("Join server");
     JButton exit = new JButton("Exit");
     JMenuItem easy = new JMenuItem("Easy");
     JMenuItem medium = new JMenuItem("Medium");
@@ -394,7 +394,7 @@ public class GUI extends JPanel implements ActionListener {
         this.setLayout(new BorderLayout());
 
         head.add(newGame);
-        head.add(addPlayer);
+        headMenu.add(addPlayer);
         head.add(exit);
 
         diff.add(easy);
@@ -465,12 +465,58 @@ public class GUI extends JPanel implements ActionListener {
             String name = JOptionPane.showInputDialog(this, "Enter your name");
             if (name != null) {
                 // create a new player in a new window
-                JFrame newPlayer = new JFrame(name);
-                player = new playerGui(name, m);
-                player.setVisible(true);
-                newPlayer.setContentPane(player);
-                newPlayer.setTitle(name);
-                newPlayer.pack();
+                main.setTitle(name);
+                try {
+                    System.out.println("client started ...");
+                    Socket server = new Socket("localhost", PORT);
+                    DataInputStream in = new DataInputStream(server.getInputStream());
+                    DataOutputStream out = new DataOutputStream(server.getOutputStream());
+                    System.out.println("client reading ...");
+        
+                    Thread sThread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                DataInputStream in = new DataInputStream(server.getInputStream());
+                                DataOutputStream out = new DataOutputStream(server.getOutputStream());
+                                int msg ;
+                                while (true) {
+                                    if (in.available() == 0)
+                                        continue;
+                                    msg = in.readInt();
+                                    switch (msg) {
+                                        case 100:
+                                            msg = in.readInt();
+                                            System.out.println("server in thread 2 says: the dim = " + msg);
+                                            break;
+                                        case 200:
+                                            msg = in.readInt();
+                                            System.out.println("server in thread 2 says: the nb mines = " + msg);
+                                            break;
+                                        case 911:
+                                            changeForm(4, 2);
+                                            break;
+                                        case 912:
+                                            changeForm(7, 7);
+                                            break;
+                                        case 913:
+                                            changeForm(9, 18);
+                                            break;
+                                        default:
+                                            System.out.println("server in thread 2 says: " + msg);
+                                            break;
+                                    }
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        
+                    });
+                    sThread.start();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
 
             } 
         }
