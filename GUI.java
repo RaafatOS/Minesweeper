@@ -43,7 +43,11 @@ public class GUI extends JPanel implements ActionListener {
     private Timer timer;
     private int seconds;
     private HashMap<String, Integer> scores = new HashMap<String, Integer>();
-    playerGui player;
+    Socket serv ;
+    private DataInputStream in;
+    private DataOutputStream out;
+    boolean isConnect = false;
+    boolean propagate = true;
 
     // file reader and writer
     public static String readFile(String path) {
@@ -127,56 +131,6 @@ public class GUI extends JPanel implements ActionListener {
         }
     }
     
-    // playerGui class
-    // public class playerGui extends JFrame implements ActionListener {
-
-    //     String name = "";
-    //     Matrix mat;
-    //     JButton button = new JButton("Click me");
-    //     JPanel playPanel;
-    //     Case[][] casesP;
-
-    //     @Override
-    //     public void actionPerformed(ActionEvent e) {
-    //         if (e.getSource() == button) {
-    //             System.out.println(name);
-    //         }
-    //     }
-
-    //     public void initializePlayer() {
-    //         casesP = new Case[mat.getDIM()][mat.getDIM()];
-    //         playPanel = new JPanel(new GridLayout(mat.getDIM(), mat.getDIM()));
-    //         for (int i = 0; i < mat.getDIM(); i++) {
-    //             for (int j = 0; j < mat.getDIM(); j++) {
-    //                 casesP[i][j] = new Case(i, j);
-    //                 casesP[i][j].setOpaque(true);
-    //                 casesP[i][j].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-    //                 casesP[i][j].setBackground(Color.LIGHT_GRAY);
-    //                 playPanel.add(casesP[i][j]);
-    //             }
-    //         }
-    //         //add(playPanel, BorderLayout.CENTER);
-    //     }
-
-    //     public playerGui(String title, Matrix mat) {
-    //         super(title);
-    //         name = title;
-    //         this.mat = mat;
-    //         JPanel body = new JPanel(new GridLayout(1, 2));
-
-    //         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    //         setVisible(true);
-
-    //         button.addActionListener(this);
-    //         body.add(button);
-    //         initializePlayer();
-    //         body.add(playPanel, BorderLayout.CENTER);
-    //         add(body);
-    //         pack();
-    //     }
-
-    // }
-
     // case class with functions
 
     public class Case extends JPanel implements MouseListener {
@@ -210,6 +164,7 @@ public class GUI extends JPanel implements ActionListener {
             previousVal = numCase;
             cases[x][y].setTxt(Integer.toString(numCase));
             incrementNbOuvert();
+            if(isConnect)  sendCaseOpened(x, y);
             cases[x][y].repaint();
         }
 
@@ -266,7 +221,8 @@ public class GUI extends JPanel implements ActionListener {
                 } else {
                     if (cases[x][y].state == 0) {
                         if (numCase == 0) {
-                            propagate(x, y);
+                            if(propagate)propagate(x, y);
+                            else openCase(x,y);
                             checkWin();
                         } else {
                             openCase(x,y);
@@ -321,6 +277,68 @@ public class GUI extends JPanel implements ActionListener {
 
     }
 
+    // server functions
+    public void clientHandler() {
+        try {
+            System.out.println("client started ...");
+            serv = new Socket("localhost", PORT);
+            in = new DataInputStream(serv.getInputStream());
+            out = new DataOutputStream(serv.getOutputStream());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+    }
+
+    // change difficulty
+    public synchronized void sendCaseOpened(int x, int y) {
+        new Thread(() -> {
+            try {
+                DataOutputStream outCase = new DataOutputStream(serv.getOutputStream());
+
+                outCase.writeInt(x);
+                System.out.println("Client sending x = " + x);
+                outCase.writeInt(y);
+                System.out.println(" sending y = "+y);
+                outCase.writeInt(m.computeMinesAround(x, y));
+                System.out.println("score sent");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+    
+    public void changeDifficulty() {
+        new Thread(() -> {
+            try {
+                int msg;
+                DataInputStream inDiff = new DataInputStream(serv.getInputStream());
+    
+                while (true) {
+                    msg = inDiff.readInt();
+    
+                    switch (msg) {
+                        case 911:// easy
+                            changeForm(4, 2);
+                            break;
+                        case 912:// medium
+                            changeForm(7, 7);
+                            break;
+                        case 913:// hard
+                            changeForm(9, 18);
+                            break;
+                        default:
+                            System.out.println("Server in thread 2 says: " + msg);
+                            break;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+    
+    
     // functions
     // 1) create a new matrix
 
@@ -356,16 +374,10 @@ public class GUI extends JPanel implements ActionListener {
         startTimer();
     }
     // GUI creation
-
-    GUI() {
-        this(new Matrix(7, 7), new Main());
-    }
-
-    GUI(String s,Matrix mat) {
-        this(mat, new Main());
-        System.out.println(s);
-    }
-
+    /**
+     * @param mat
+     * @param main
+     */
     GUI(Matrix mat, JFrame main) {
         this.main = main;
         // reading latest diff and applying it to the game
@@ -387,6 +399,14 @@ public class GUI extends JPanel implements ActionListener {
                 break;
         }
         m = init;
+        // server configuration
+        // try{
+        //     serv = new Socket("localhost", PORT);
+        //     in = new DataInputStream(serv.getInputStream());
+        //     out = new DataOutputStream(serv.getOutputStream());
+        // }catch(Exception e){
+        //     e.printStackTrace();
+        // }
 
         // creation of the grid with its elements
         grid = new JPanel(new GridLayout(m.getDIM(), m.getDIM()));
@@ -465,58 +485,11 @@ public class GUI extends JPanel implements ActionListener {
             String name = JOptionPane.showInputDialog(this, "Enter your name");
             if (name != null) {
                 // create a new player in a new window
+                isConnect = true;
+                propagate = false;
                 main.setTitle(name);
-                try {
-                    System.out.println("client started ...");
-                    Socket server = new Socket("localhost", PORT);
-                    DataInputStream in = new DataInputStream(server.getInputStream());
-                    DataOutputStream out = new DataOutputStream(server.getOutputStream());
-        
-                    Thread sThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                DataInputStream in = new DataInputStream(server.getInputStream());
-                                DataOutputStream out = new DataOutputStream(server.getOutputStream());
-                                int msg ;
-                                while (true) {
-                                    if (in.available() == 0)
-                                        continue;
-                                    msg = in.readInt();
-                                    switch (msg) {
-                                        case 100:
-                                            msg = in.readInt();
-                                            System.out.println("server in thread 2 says: the dim = " + msg);
-                                            break;
-                                        case 200:
-                                            msg = in.readInt();
-                                            System.out.println("server in thread 2 says: the nb mines = " + msg);
-                                            break;
-                                        case 911://easy
-                                            changeForm(4, 2);
-                                            break;
-                                        case 912://medium
-                                            changeForm(7, 7);
-                                            break;
-                                        case 913://hard
-                                            changeForm(9, 18);
-                                            break;
-                                        default:
-                                            System.out.println("server in thread 2 says: " + msg);
-                                            break;
-                                    }
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        
-                    });
-                    sThread.start();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-
+                clientHandler();
+                changeDifficulty();
             } 
         }
     }

@@ -2,7 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class serverGui extends JFrame{
-
+    Server serv;
     public serverGui(){
         JButton start = new JButton("Start");
         JButton stop = new JButton("Stop");
@@ -16,7 +16,7 @@ public class serverGui extends JFrame{
         diff.add(easy);
         diff.add(medium);
         diff.add(hard);
-        Server serv = new Server();
+        serv = new Server();
 
         start.addActionListener(e -> {
             new Thread(() -> serv.start(1)).start();
@@ -40,6 +40,8 @@ public class serverGui extends JFrame{
             // make hard all players
             new Thread(() -> serv.hardG()).start();
         });
+
+        serv.caseOpening();
         panel.add(start);
         panel.add(stop);
         
@@ -50,5 +52,9 @@ public class serverGui extends JFrame{
         this.setSize(500, 200);
         this.setVisible(true);
         //new Server().start();
+    }
+
+    public Server getServer(){
+        return serv;
     }
 }

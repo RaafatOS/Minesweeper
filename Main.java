@@ -9,6 +9,10 @@ public class Main extends JFrame {
         SwingUtilities.invokeLater(()-> new serverGui());
     }
 
+    public serverGui getServerGui(){
+        return new serverGui();
+    }
+
     public Main() {
          Matrix m = new Matrix(7,7);
 

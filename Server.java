@@ -15,7 +15,7 @@ public class Server {
         try {
             serv = new ServerSocket(PORT);
             System.out.println("server started ...");
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -34,6 +34,51 @@ public class Server {
             e.printStackTrace();
         }
     }
+
+    public synchronized void caseOpening() {
+        new Thread(() -> {
+            try {
+                if (connectedClients.size() == 0)
+                    caseOpening();
+                else {
+                    DataInputStream in = new DataInputStream(connectedClients.get(0).getInputStream());
+                    DataOutputStream out = new DataOutputStream(connectedClients.get(0).getOutputStream());
+
+                    while (true) {
+                        int x = in.readInt();
+                        System.out.println("x = " + x);
+
+                        int y = in.readInt();
+                        System.out.println("y = " + y);
+
+                        int score = in.readInt();
+                        System.out.println("score = " + score);
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+    
+    
+                    // for (int i = 0; i < connectedClients.size(); i++) {
+                    //     DataInputStream in = new DataInputStream(connectedClients.get(i).getInputStream());
+                    //     DataOutputStream out = new DataOutputStream(connectedClients.get(i).getOutputStream());
+                    //     if (in.available() == 0)
+                    //         continue;
+                    //     else {
+                    //         int x = in.readInt();
+                    //         System.out.println("x = " + x);
+                    //         out.writeInt(202);// code that the message is received
+                    //         int y = in.readInt();
+                    //         System.out.println("y = " + y);
+                    //         out.writeInt(202);// code that the message is received
+                    //         int score = in.readInt();
+                    //         System.out.println("score = " + score);
+                    //     }
+                    // }
 
     public void getDimNb(Socket client) {
         new Thread(new Runnable() {
