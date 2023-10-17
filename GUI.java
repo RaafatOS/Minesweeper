@@ -471,7 +471,6 @@ public class GUI extends JPanel implements ActionListener {
                     Socket server = new Socket("localhost", PORT);
                     DataInputStream in = new DataInputStream(server.getInputStream());
                     DataOutputStream out = new DataOutputStream(server.getOutputStream());
-                    System.out.println("client reading ...");
         
                     Thread sThread = new Thread(new Runnable() {
                         @Override
@@ -493,13 +492,13 @@ public class GUI extends JPanel implements ActionListener {
                                             msg = in.readInt();
                                             System.out.println("server in thread 2 says: the nb mines = " + msg);
                                             break;
-                                        case 911:
+                                        case 911://easy
                                             changeForm(4, 2);
                                             break;
-                                        case 912:
+                                        case 912://medium
                                             changeForm(7, 7);
                                             break;
-                                        case 913:
+                                        case 913://hard
                                             changeForm(9, 18);
                                             break;
                                         default:

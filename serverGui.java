@@ -28,18 +28,17 @@ public class serverGui extends JFrame{
 
         easy.addActionListener(e -> {
             // make easy all players
-            new Thread(() ->
-             serv.start(2)).start();
+            new Thread(() -> serv.easyG()).start();
         });
 
         medium.addActionListener(e -> {
             // make medium all players
-            new Thread(() -> serv.start(3)).start();
+            new Thread(() -> serv.mediumG()).start();
         });
 
         hard.addActionListener(e -> {
             // make hard all players
-            new Thread(() -> serv.start(4)).start();
+            new Thread(() -> serv.hardG()).start();
         });
         panel.add(start);
         panel.add(stop);

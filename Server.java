@@ -14,8 +14,8 @@ public class Server {
     Server(){
         try {
             serv = new ServerSocket(PORT);
-            serv.setSoTimeout(1000);
             System.out.println("server started ...");
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -29,27 +29,13 @@ public class Server {
                 connectedClients.add(client);   
                 nbJ++;
                 System.out.println("client connected " + nbJ);
-                switch (code) {
-                    case 1:
-                        getDimNb(connectedClients.get(0));
-                        break;
-                    case 2:
-                        easyG(connectedClients.get(0));
-                        break;
-                    case 3:
-                        mediumG(connectedClients.get(0));
-                        break;
-                    case 4:
-                        hardG(connectedClients.get(0));
-                        break;
-                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void getDimNb(Socket client) {
+    public void getDimNb(Socket client) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -82,22 +68,19 @@ public class Server {
         }).start();
     }
 
-    private void easyG(Socket client) {
+    public void easyG() {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    
-                    DataInputStream in = new DataInputStream(client.getInputStream());
-                    DataOutputStream out = new DataOutputStream(client.getOutputStream());
+                    for (int i = 0; i < connectedClients.size(); i++) {
+                        DataInputStream in = new DataInputStream(connectedClients.get(i).getInputStream());
+                        DataOutputStream out = new DataOutputStream(connectedClients.get(i).getOutputStream());
 
-                    System.out.println("thread started ...");
-                    Thread.sleep(100);
-                    out.writeInt(911);
-                    Thread.sleep(100);
-                    // for (Socket otherClient : connectedClients) {
-                    //     out.write(911);
-                    // }
+                        System.out.println("thread started ...");
+                        Thread.sleep(100);
+                        out.writeInt(911);//easy
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -105,22 +88,19 @@ public class Server {
         }).start();
     }
 
-    private void mediumG(Socket client) {
+    public void mediumG() {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    
-                    DataInputStream in = new DataInputStream(client.getInputStream());
-                    DataOutputStream out = new DataOutputStream(client.getOutputStream());
+                    for (int i = 0; i < connectedClients.size(); i++) {
+                        DataInputStream in = new DataInputStream(connectedClients.get(i).getInputStream());
+                        DataOutputStream out = new DataOutputStream(connectedClients.get(i).getOutputStream());
 
-                    System.out.println("thread started ...");
-                    Thread.sleep(100);
-                    out.writeInt(912);
-                    Thread.sleep(100);
-                    // for (Socket otherClient : connectedClients) {
-                    //     out.write(911);
-                    // }
+                        System.out.println("thread started ...");
+                        Thread.sleep(100);
+                        out.writeInt(912);//medium
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -128,22 +108,19 @@ public class Server {
         }).start();
     }
 
-    private void hardG(Socket client) {
+    public void hardG() {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    
-                    DataInputStream in = new DataInputStream(client.getInputStream());
-                    DataOutputStream out = new DataOutputStream(client.getOutputStream());
+                    for (int i = 0; i < connectedClients.size(); i++) {
+                        DataInputStream in = new DataInputStream(connectedClients.get(i).getInputStream());
+                        DataOutputStream out = new DataOutputStream(connectedClients.get(i).getOutputStream());
 
-                    System.out.println("thread started ...");
-                    Thread.sleep(100);
-                    out.writeInt(913);
-                    Thread.sleep(100);
-                    // for (Socket otherClient : connectedClients) {
-                    //     out.write(911);
-                    // }
+                        System.out.println("thread started ...");
+                        Thread.sleep(100);
+                        out.writeInt(913);//hard
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
