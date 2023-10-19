@@ -49,6 +49,7 @@ public class GUI extends JPanel implements ActionListener {
     private DataOutputStream out;
     boolean isConnect = false;
     boolean propagate = true;
+    boolean isBombed = false;
 
     // file reader and writer
     public static String readFile(String path) {
@@ -172,6 +173,7 @@ public class GUI extends JPanel implements ActionListener {
                 cases[x][y].setBackground(Color.RED);
                 cases[x][y].setTxt("X");
                 cases[x][y].repaint();
+                if(isConnect && !isBombed) sendCaseOpened(x, y, -5);
                 cases[x][y].state = 2;
             }
         }
@@ -228,6 +230,7 @@ public class GUI extends JPanel implements ActionListener {
                             changeForm(m.getDIM(), m.minesNumber);
                         } else {
                             sendCaseOpened(x, y, -5);
+                            isBombed = true;
                         }
                     }
                 } else {
