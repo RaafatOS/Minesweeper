@@ -25,6 +25,7 @@ public class GUI extends JPanel implements ActionListener {
     JMenu diff = new JMenu("Difficulty");
     JButton newGame = new JButton("New Game");
     JMenuItem addPlayer = new JMenuItem("Join server");
+    JMenuItem disconnect = new JMenuItem("Disconnect from server");
     JButton exit = new JButton("Exit");
     JMenuItem easy = new JMenuItem("Easy");
     JMenuItem medium = new JMenuItem("Medium");
@@ -157,15 +158,22 @@ public class GUI extends JPanel implements ActionListener {
         }
 
         public void openCase(int x, int y) {
-            cases[x][y].setBackground(Color.white);
-            cases[x][y].state = 2;
-            int numCase;
-            numCase = m.computeMinesAround(x, y);
-            previousVal = numCase;
-            cases[x][y].setTxt(Integer.toString(numCase));
-            incrementNbOuvert();
-            if(isConnect)  sendCaseOpened(x, y);
-            cases[x][y].repaint();
+            if(!m.getCase(x, y)){
+                cases[x][y].setBackground(Color.white);
+                cases[x][y].state = 2;
+                int numCase;
+                numCase = m.computeMinesAround(x, y);
+                previousVal = numCase;
+                cases[x][y].setTxt(Integer.toString(numCase));
+                incrementNbOuvert();
+                if(isConnect) sendCaseOpened(x, y, m.computeMinesAround(x, y));
+                cases[x][y].repaint();
+            }else {
+                cases[x][y].setBackground(Color.RED);
+                cases[x][y].setTxt("X");
+                cases[x][y].repaint();
+                cases[x][y].state = 2;
+            }
         }
 
         public void propagate(int x, int y) {
@@ -197,7 +205,7 @@ public class GUI extends JPanel implements ActionListener {
                 changeForm(m.getDIM(), m.minesNumber);
                 // player.playPanel.removeAll();
                 // player.initializePlayer();
-            }
+            } 
         }
 
         @Override
@@ -213,10 +221,14 @@ public class GUI extends JPanel implements ActionListener {
                         displayScores();
                         cases[x][y].setBackground(Color.RED);
                         cases[x][y].setTxt("X");
-                        JOptionPane.showMessageDialog(this, "You lost! Your score is: " + score);
-                        stopTimer();
-                        resetTimer();
-                        changeForm(m.getDIM(), m.minesNumber);
+                        if(!isConnect){
+                            JOptionPane.showMessageDialog(this, "You lost!");
+                            stopTimer();
+                            resetTimer();
+                            changeForm(m.getDIM(), m.minesNumber);
+                        } else {
+                            sendCaseOpened(x, y, -5);
+                        }
                     }
                 } else {
                     if (cases[x][y].state == 0) {
@@ -291,17 +303,14 @@ public class GUI extends JPanel implements ActionListener {
     }
 
     // change difficulty
-    public synchronized void sendCaseOpened(int x, int y) {
+    public synchronized void sendCaseOpened(int x, int y, int sc) {
         new Thread(() -> {
             try {
                 DataOutputStream outCase = new DataOutputStream(serv.getOutputStream());
-
+                outCase.writeInt(2000);// code to opening case
                 outCase.writeInt(x);
-                System.out.println("Client sending x = " + x);
                 outCase.writeInt(y);
-                System.out.println(" sending y = "+y);
-                outCase.writeInt(m.computeMinesAround(x, y));
-                System.out.println("score sent");
+                outCase.writeInt(sc);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -326,6 +335,11 @@ public class GUI extends JPanel implements ActionListener {
                             break;
                         case 913:// hard
                             changeForm(9, 18);
+                            break;
+                        case 202:
+                            int x = inDiff.readInt();
+                            int y = inDiff.readInt();
+                            if(this.cases[x][y].state != 2)this.cases[x][y].openCase(x, y);
                             break;
                         default:
                             System.out.println("Server in thread 2 says: " + msg);
@@ -399,16 +413,6 @@ public class GUI extends JPanel implements ActionListener {
                 break;
         }
         m = init;
-        // server configuration
-        // try{
-        //     serv = new Socket("localhost", PORT);
-        //     in = new DataInputStream(serv.getInputStream());
-        //     out = new DataOutputStream(serv.getOutputStream());
-        // }catch(Exception e){
-        //     e.printStackTrace();
-        // }
-
-        // creation of the grid with its elements
         grid = new JPanel(new GridLayout(m.getDIM(), m.getDIM()));
         startPanel = new JPanel(new GridLayout(m.getDIM(), m.getDIM()));
         this.setLayout(new BorderLayout());
@@ -423,6 +427,8 @@ public class GUI extends JPanel implements ActionListener {
 
         menu.add(diff);
         headMenu.add(server);
+        disconnect.setEnabled(false);
+        headMenu.add(disconnect);
         server.addActionListener(this);
         menu.add(headMenu);
         head.add(menu);
@@ -431,7 +437,9 @@ public class GUI extends JPanel implements ActionListener {
         exit.addActionListener(this);
         exit.setToolTipText("the end");
         newGame.addActionListener(this);
+        addPlayer.setEnabled(true);
         addPlayer.addActionListener(this);
+        disconnect.addActionListener(this);
         easy.addActionListener(this);
         medium.addActionListener(this);
         hard.addActionListener(this);
@@ -478,6 +486,8 @@ public class GUI extends JPanel implements ActionListener {
         if (e.getSource() == server) {
             // new Server().start();
             ((Main) main).createServer();
+            server.setEnabled(false);
+            addPlayer.setEnabled(true);
             //new client();
         }
 
@@ -490,7 +500,24 @@ public class GUI extends JPanel implements ActionListener {
                 main.setTitle(name);
                 clientHandler();
                 changeDifficulty();
+                addPlayer.setEnabled(false);
+                disconnect.setEnabled(true);
             } 
+        }
+
+        if (e.getSource() == disconnect) {
+            try {
+                isConnect = false;
+                propagate = true;
+                out.writeInt(1000);
+                out.close();
+                in.close();
+                serv.close();
+                addPlayer.setEnabled(true);
+                disconnect.setEnabled(false);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 }

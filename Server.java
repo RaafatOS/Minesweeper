@@ -1,6 +1,9 @@
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.JLabel;
+
 import java.io.*;
 
 public class Server {
@@ -9,13 +12,16 @@ public class Server {
     Matrix m = new Matrix(7, 7);
     ServerSocket serv;
     Socket client;
-    private final List<Socket> connectedClients = new ArrayList<>();
+    serverGui gui;
+    private List<Socket> connectedClients = new ArrayList<>();
+    private List<Integer> scores = new ArrayList<>();
+    int nbJ;
 
-    Server(){
+    Server(serverGui gui) {
+        this.gui = gui;
         try {
             serv = new ServerSocket(PORT);
             System.out.println("server started ...");
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -23,9 +29,10 @@ public class Server {
     
     public void start(int code) {
         try {
-            int nbJ = 0;
+            nbJ = 0;
             while (true) {
                 client = serv.accept();
+                scores.add(0);
                 connectedClients.add(client);   
                 nbJ++;
                 System.out.println("client connected " + nbJ);
@@ -41,18 +48,42 @@ public class Server {
                 if (connectedClients.size() == 0)
                     caseOpening();
                 else {
-                    DataInputStream in = new DataInputStream(connectedClients.get(0).getInputStream());
-                    DataOutputStream out = new DataOutputStream(connectedClients.get(0).getOutputStream());
-
                     while (true) {
-                        int x = in.readInt();
-                        System.out.println("x = " + x);
+                        for(int i=0; i<connectedClients.size(); i++){
+                            
+                            DataInputStream in = new DataInputStream(connectedClients.get(i).getInputStream());
+                            if (in.available() == 0)
+                                continue;
+                            else {
+                                switch(in.readInt()){
+                                    case 2000:
+                                        int x = in.readInt();
+                                        int y = in.readInt();
+                                        int score = in.readInt();
+                                        scores.set(i, scores.get(i) + score);
+                                        gui.setScores();
 
-                        int y = in.readInt();
-                        System.out.println("y = " + y);
+                                        // send code with x and y to all clients
+                                        for (int j = 0; j < connectedClients.size(); j++) {
+                                            DataOutputStream out2 = new DataOutputStream(
+                                                    connectedClients.get(j).getOutputStream());
+                                            out2.writeInt(202);// code that the message is received
+                                            out2.writeInt(x);
+                                            out2.writeInt(y);
+                                        }
+                                        break;
+                                    case 1000:// client disconnected
+                                        connectedClients.get(i).close();
+                                        connectedClients.remove(i);
+                                        scores.remove(i);
+                                        nbJ--;
+                                        gui.setScores();
+                                        break;
 
-                        int score = in.readInt();
-                        System.out.println("score = " + score);
+                                }
+                                
+                            }
+                        }
                     }
                 }
 
@@ -62,23 +93,9 @@ public class Server {
         }).start();
     }
     
-    
-                    // for (int i = 0; i < connectedClients.size(); i++) {
-                    //     DataInputStream in = new DataInputStream(connectedClients.get(i).getInputStream());
-                    //     DataOutputStream out = new DataOutputStream(connectedClients.get(i).getOutputStream());
-                    //     if (in.available() == 0)
-                    //         continue;
-                    //     else {
-                    //         int x = in.readInt();
-                    //         System.out.println("x = " + x);
-                    //         out.writeInt(202);// code that the message is received
-                    //         int y = in.readInt();
-                    //         System.out.println("y = " + y);
-                    //         out.writeInt(202);// code that the message is received
-                    //         int score = in.readInt();
-                    //         System.out.println("score = " + score);
-                    //     }
-                    // }
+    public List<Integer> getScores(){
+        return scores;
+    }
 
     public void getDimNb(Socket client) {
         new Thread(new Runnable() {
@@ -119,7 +136,6 @@ public class Server {
             public void run() {
                 try {
                     for (int i = 0; i < connectedClients.size(); i++) {
-                        DataInputStream in = new DataInputStream(connectedClients.get(i).getInputStream());
                         DataOutputStream out = new DataOutputStream(connectedClients.get(i).getOutputStream());
 
                         System.out.println("thread started ...");
@@ -139,7 +155,6 @@ public class Server {
             public void run() {
                 try {
                     for (int i = 0; i < connectedClients.size(); i++) {
-                        DataInputStream in = new DataInputStream(connectedClients.get(i).getInputStream());
                         DataOutputStream out = new DataOutputStream(connectedClients.get(i).getOutputStream());
 
                         System.out.println("thread started ...");
@@ -159,7 +174,6 @@ public class Server {
             public void run() {
                 try {
                     for (int i = 0; i < connectedClients.size(); i++) {
-                        DataInputStream in = new DataInputStream(connectedClients.get(i).getInputStream());
                         DataOutputStream out = new DataOutputStream(connectedClients.get(i).getOutputStream());
 
                         System.out.println("thread started ...");
