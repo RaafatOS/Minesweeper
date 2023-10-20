@@ -15,6 +15,7 @@ public class Server {
     serverGui gui;
     private List<Socket> connectedClients = new ArrayList<>();
     private List<Integer> scores = new ArrayList<>();
+    private List<String> names = new ArrayList<>();
     int nbJ;
 
     Server(serverGui gui) {
@@ -33,9 +34,15 @@ public class Server {
             while (true) {
                 client = serv.accept();
                 scores.add(0);
-                connectedClients.add(client);   
+                connectedClients.add(client);
                 nbJ++;
-                System.out.println("client connected " + nbJ);
+                DataOutputStream out = new DataOutputStream(client.getOutputStream());
+                DataInputStream in = new DataInputStream(client.getInputStream());
+                out.writeInt(420);
+                String msg = in.readUTF();
+                names.add(msg);
+                gui.setScores();
+                System.out.println("client connected " + msg);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -79,7 +86,6 @@ public class Server {
                                         nbJ--;
                                         gui.setScores();
                                         break;
-
                                 }
                                 
                             }
@@ -95,6 +101,10 @@ public class Server {
     
     public List<Integer> getScores(){
         return scores;
+    }
+
+    public List<String> getNames(){
+        return names;
     }
 
     public void getDimNb(Socket client) {

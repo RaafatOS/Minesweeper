@@ -205,8 +205,6 @@ public class GUI extends JPanel implements ActionListener {
                 stopTimer();
                 resetTimer();
                 changeForm(m.getDIM(), m.minesNumber);
-                // player.playPanel.removeAll();
-                // player.initializePlayer();
             } 
         }
 
@@ -238,10 +236,10 @@ public class GUI extends JPanel implements ActionListener {
                         if (numCase == 0) {
                             if(propagate)propagate(x, y);
                             else openCase(x,y);
-                            checkWin();
+                            if(!isConnect) checkWin();
                         } else {
                             openCase(x,y);
-                            checkWin();
+                            if(!isConnect) checkWin();
                         }
                     }
                 }
@@ -293,7 +291,7 @@ public class GUI extends JPanel implements ActionListener {
     }
 
     // server functions
-    public void clientHandler() {
+    public void clientHandler(String name) {
         try {
             System.out.println("client started ...");
             serv = new Socket("localhost", PORT);
@@ -305,6 +303,17 @@ public class GUI extends JPanel implements ActionListener {
 
     }
 
+    // check win
+    // public void checkWinConnected() {
+    //     try {
+    //         if (isConnect && (getNbOuvert() == m.getDIM()*m.getDIM())){
+    //                 DataOutputStream outWin = new DataOutputStream(serv.getOutputStream());
+    //                 outWin.writeInt(999);// code to display winner
+    //             }
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //     }
+    // }
     // change difficulty
     public synchronized void sendCaseOpened(int x, int y, int sc) {
         new Thread(() -> {
@@ -320,7 +329,7 @@ public class GUI extends JPanel implements ActionListener {
         }).start();
     }
     
-    public void changeDifficulty() {
+    public void changeDifficulty(String name) {
         new Thread(() -> {
             try {
                 int msg;
@@ -343,6 +352,9 @@ public class GUI extends JPanel implements ActionListener {
                             int x = inDiff.readInt();
                             int y = inDiff.readInt();
                             if(this.cases[x][y].state != 2)this.cases[x][y].openCase(x, y);
+                            break;
+                        case 420:
+                            out.writeUTF(name);
                             break;
                         default:
                             System.out.println("Server in thread 2 says: " + msg);
@@ -495,14 +507,14 @@ public class GUI extends JPanel implements ActionListener {
         }
 
         if (e.getSource() == addPlayer) {
-            String name = JOptionPane.showInputDialog(this, "Enter your name");
+            String name = JOptionPane.showInputDialog("Enter your name", "Player");
             if (name != null) {
                 // create a new player in a new window
                 isConnect = true;
                 propagate = false;
                 main.setTitle(name);
-                clientHandler();
-                changeDifficulty();
+                clientHandler(name);
+                changeDifficulty(name);
                 addPlayer.setEnabled(false);
                 disconnect.setEnabled(true);
             } 
